@@ -467,6 +467,67 @@ def scrape_type(session, chotatsu_type, label, show_url, search_url, sid, config
     return all_bids
 
 # ===== ジオコーダー =====
+# 埼玉県の境界ボックス（ざっくり矩形）
+# 参考: 北緯 35.7473〜36.2836 / 東経 138.7107〜139.9003
+SAITAMA_BBOX = {
+    "min_lat": 35.7473, "max_lat": 36.2836,
+    "min_lon": 138.7107, "max_lon": 139.9003,
+}
+# Nominatim の viewbox パラメータは「左,上,右,下」の順
+SAITAMA_VIEWBOX = f"{SAITAMA_BBOX['min_lon']},{SAITAMA_BBOX['max_lat']}," \
+                  f"{SAITAMA_BBOX['max_lon']},{SAITAMA_BBOX['min_lat']}"
+
+def _in_saitama(lat, lon):
+    """座標が埼玉県の範囲内か判定"""
+    if lat is None or lon is None:
+        return False
+    return (SAITAMA_BBOX["min_lat"] <= lat <= SAITAMA_BBOX["max_lat"]
+            and SAITAMA_BBOX["min_lon"] <= lon <= SAITAMA_BBOX["max_lon"])
+
+def _normalize_address(addr):
+    """Nominatim が解釈しやすいように住所文字列を整える。
+    - 「／」や全角空白で区切られた複合住所は先頭部分のみ採用
+    - 「地内」「地内外」「内全域」「全域」「敷地内」「指定場所」などの曖昧表現を除去
+    - 建物名や号室が続く場合（「〇〇会館地下1階」等）は「番地」までで切る
+    """
+    s = (addr or "").strip()
+    if not s:
+        return ""
+    # 「／」「　（全角スペース）」で区切られる複数住所は先頭のみ
+    s = re.split(r"[／\s]", s)[0]
+    # 末尾の曖昧表現を削除（繰り返し）
+    for _ in range(3):
+        s2 = re.sub(r"(地内外|地内|内全域|全域|敷地内|指定場所|外)$", "", s)
+        if s2 == s:
+            break
+        s = s2
+    return s.strip()
+
+def _extract_city(addr):
+    """住所から「〜市／町／村／区」を抜き出す。
+    - 「さいたま市〇〇区」を最優先
+    - 先頭部に市町村名がなければ、複合住所の後ろ側（「／」以降）も探す
+    """
+    if not addr:
+        return ""
+    # さいたま市の区までを最優先（文字列のどこにあっても）
+    m = re.search(r"(さいたま市[^\s　／]{1,6}?区)", addr)
+    if m:
+        return m.group(1)
+    # 先頭から市町村名
+    m = re.search(r"^([^\s　／]{1,8}?[市町村])", addr)
+    if m:
+        return m.group(1)
+    # 「／」以降に市町村名が含まれている場合
+    m = re.search(r"／\s*([^\s　／]{1,8}?[市町村])", addr)
+    if m:
+        return m.group(1)
+    # 文字列のどこかに〜市/町/村があれば最後の手段として拾う
+    m = re.search(r"([一-龥ぁ-んァ-ヶヵヶー]{1,6}[市町村])", addr)
+    if m:
+        return m.group(1)
+    return ""
+
 def load_cache():
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, "r", encoding="utf-8") as f:
@@ -477,27 +538,87 @@ def save_cache(cache):
     with open(CACHE_FILE, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=2)
 
+def purge_bad_cache(cache):
+    """埼玉県外の座標がキャッシュに残っていたら null 化して再取得対象にする"""
+    removed = 0
+    for k, v in list(cache.items()):
+        lat = v.get("lat"); lon = v.get("lon")
+        if lat is not None and lon is not None and not _in_saitama(lat, lon):
+            cache[k] = {"lat": None, "lon": None}
+            removed += 1
+    if removed:
+        save_cache(cache)
+        print(f"  ⚠ 埼玉県外のキャッシュを {removed} 件クリアしました")
+
+def _nominatim_query(q):
+    """Nominatim に問い合わせ、埼玉県の範囲にヒットした先頭1件のみ返す。"""
+    try:
+        time.sleep(GEOCODE_INT)
+        r = requests.get(
+            GEOCODE_URL,
+            params={
+                "q": q,
+                "format": "json",
+                "limit": 5,
+                "countrycodes": "jp",
+                "viewbox": SAITAMA_VIEWBOX,
+                "bounded": 1,  # viewbox 外を除外
+            },
+            headers={"User-Agent": "SaitamaBidMapApp/1.0"},
+            timeout=10,
+        )
+        data = r.json()
+        for row in data:
+            lat = float(row["lat"]); lon = float(row["lon"])
+            if _in_saitama(lat, lon):
+                return lat, lon
+    except Exception as e:
+        print(f"    ジオコーディングエラー: {e}")
+    return None, None
+
 def geocode(addr, cache):
+    """住所→座標。3段フォールバック:
+      ① 元の住所（埼玉県を接頭辞に付けて）
+      ② 「地内」等を除去した正規化住所
+      ③ 市町村名のみ
+    いずれも埼玉県の範囲に入るものだけ採用。
+    """
     if not addr:
         return None, None
     key = addr.strip()
+
+    # キャッシュヒットでも範囲外なら採用しない
     if key in cache:
-        return cache[key].get("lat"), cache[key].get("lon")
-    q = key if re.search(r"埼玉|さいたま", key) else "埼玉県" + key
-    try:
-        time.sleep(GEOCODE_INT)
-        r = requests.get(GEOCODE_URL,
-                         params={"q": q, "format": "json", "limit": 1, "countrycodes": "jp"},
-                         headers={"User-Agent": "SaitamaBidMapApp/1.0"},
-                         timeout=10)
-        data = r.json()
-        if data:
-            lat, lon = float(data[0]["lat"]), float(data[0]["lon"])
+        v = cache[key]
+        if _in_saitama(v.get("lat"), v.get("lon")):
+            return v["lat"], v["lon"]
+        # 既に None or 範囲外 → 再試行に進む
+
+    candidates = []
+    # ① 元の住所
+    q1 = key if re.search(r"埼玉|さいたま", key) else "埼玉県" + key
+    candidates.append(q1)
+    # ② 正規化住所
+    norm = _normalize_address(key)
+    if norm and norm != key:
+        q2 = norm if re.search(r"埼玉|さいたま", norm) else "埼玉県" + norm
+        if q2 not in candidates:
+            candidates.append(q2)
+    # ③ 市町村名のみ（複合住所の場合は元の住所全体から探す）
+    city = _extract_city(key) or _extract_city(norm)
+    if city:
+        q3 = city if re.search(r"埼玉|さいたま", city) else "埼玉県" + city
+        if q3 not in candidates:
+            candidates.append(q3)
+
+    for q in candidates:
+        lat, lon = _nominatim_query(q)
+        if lat is not None:
             cache[key] = {"lat": lat, "lon": lon}
             save_cache(cache)
             return lat, lon
-    except Exception as e:
-        print(f"    ジオコーディングエラー: {e}")
+
+    # 全滅
     cache[key] = {"lat": None, "lon": None}
     save_cache(cache)
     return None, None
@@ -563,23 +684,29 @@ def main():
     # 4. ジオコーディング
     print("\n[3/4] 住所を座標変換中...")
     cache = load_cache()
+    # 以前のバグで埼玉県外の座標がキャッシュされている場合に備え、範囲外エントリをクリアする
+    purge_bad_cache(cache)
     ok = 0
     for i, bid in enumerate(all_bids):
         loc = (bid.get("location") or "").strip()
         if not loc:
             continue
-        if loc in cache and cache[loc].get("lat"):
-            bid["lat"] = cache[loc]["lat"]
-            bid["lon"] = cache[loc]["lon"]
+        cached = cache.get(loc)
+        if cached and _in_saitama(cached.get("lat"), cached.get("lon")):
+            bid["lat"] = cached["lat"]
+            bid["lon"] = cached["lon"]
             ok += 1
             continue
         print(f"  [{i+1}/{len(all_bids)}] {loc}")
         lat, lon = geocode(loc, cache)
+        # 念のため埼玉県の範囲外は弾く（防御）
+        if lat is not None and not _in_saitama(lat, lon):
+            lat, lon = None, None
         bid["lat"] = lat
         bid["lon"] = lon
         if lat:
             ok += 1
-    print(f"  ✓ {ok} 件の座標変換完了")
+    print(f"  ✓ {ok} 件の座標変換完了 / {len(all_bids)} 件中")
 
     return all_bids
 

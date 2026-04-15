@@ -119,7 +119,21 @@ export default function MapView({ bids, selectedId }: Props) {
       cluster.clearLayers();
       markerIndex.current.clear();
 
-      const mappable = bids.filter((b) => b.lat != null && b.lon != null);
+      // 埼玉県の境界ボックス（ざっくり矩形）
+      // 万一スクレイパー側の修正漏れで県外座標が混入しても地図には出さない安全網
+      const SAITAMA_BBOX = {
+        minLat: 35.7473, maxLat: 36.2836,
+        minLon: 138.7107, maxLon: 139.9003,
+      };
+      const inSaitama = (lat: number, lon: number) =>
+        lat >= SAITAMA_BBOX.minLat && lat <= SAITAMA_BBOX.maxLat &&
+        lon >= SAITAMA_BBOX.minLon && lon <= SAITAMA_BBOX.maxLon;
+
+      const mappable = bids.filter(
+        (b) =>
+          b.lat != null && b.lon != null &&
+          inSaitama(b.lat as number, b.lon as number)
+      );
       mappable.forEach((b) => {
         const m = L.marker([b.lat as number, b.lon as number], {
           title: b.name,
