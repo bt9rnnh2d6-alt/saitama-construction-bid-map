@@ -2,14 +2,15 @@ name: scrape-and-push
 
 # いつ実行するか
 on:
-  # 手動実行（Actionsタブから「Run workflow」ボタンで実行可能）
+  # 手動実行のみ（Actionsタブから「Run workflow」ボタンで実行可能）
   workflow_dispatch:
 
-  # 定期実行（UTC基準）
+  # 【一時停止中】埼玉県からの二次利用許可回答が出るまで定期実行を停止しています。
+  # 許可が出たら下記 schedule ブロックのコメント(#)を外して再開してください。
   # 日本時間 朝6時 (UTC 21時) と 夕方18時 (UTC 9時) の1日2回
-  schedule:
-    - cron: "0 21 * * *"
-    - cron: "0 9 * * *"
+  # schedule:
+  #   - cron: "0 21 * * *"
+  #   - cron: "0 9 * * *"
 
 # 同時実行を防ぐ（前のジョブが終わるまで待つ）
 concurrency:
