@@ -18,15 +18,22 @@ function escapeHtml(s: string | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
+// 埼玉県 入札情報公開システムの公開入口（フレームセット）
+// 各案件ごとの直接URLはセッション依存で作れないため、
+// 公式サイトの入口に遷移し、案件番号で検索してもらう運用とする。
+const SAITAMA_OFFICIAL_URL =
+  "https://ebidjk2.ebid2.pref.saitama.lg.jp/koukai/do/KF000ShowAction";
+
 function popupHtml(b: Bid): string {
-  const rows: Array<[string, string]> = [
+  const rowsBase: Array<[string, string]> = [
     ["工種",   b.category || "—"],
     ["発注",   b.org      || "—"],
     ["場所",   b.location || "—"],
     ["方式",   b.method   || "—"],
     ["公告日", b.notice_date || "—"],
     ["開札日", b.bid_date    || "—"],
-  ].filter(([, v]) => v && v !== "—") as Array<[string, string]>;
+  ];
+  const rows = rowsBase.filter(([, v]) => v && v !== "—") as Array<[string, string]>;
 
   const body = rows
     .map(
@@ -35,18 +42,31 @@ function popupHtml(b: Bid): string {
     )
     .join("");
 
-  // 公式サイトの案件検索URL（案件番号）に誘導
-  let linkHtml = "";
-  if (b.detail_url) {
-    linkHtml = `<a class="popup-btn" href="${escapeHtml(b.detail_url)}" target="_blank" rel="noopener">詳細を開く →</a>`;
-  } else if (b.number) {
-    const q = encodeURIComponent(b.number);
-    linkHtml = `<a class="popup-btn" href="https://www.google.com/search?q=${q}+埼玉県+入札" target="_blank" rel="noopener">案件番号で検索 →</a>`;
-  }
+  // 案件番号行（コピー用ボタン付き）
+  const numberHtml = b.number
+    ? `<div class="popup-row popup-number">
+         <span class="k">案件番号</span>
+         <span class="popup-number-val">${escapeHtml(b.number)}</span>
+         <button type="button" class="popup-copy-btn"
+                 data-copy="${escapeHtml(b.number)}"
+                 title="案件番号をコピー">コピー</button>
+       </div>`
+    : "";
+
+  // 公式サイトの入口へのボタン（案件番号を検索語としてコピー済みの前提で誘導）
+  const linkHtml = `
+    <a class="popup-btn"
+       href="${SAITAMA_OFFICIAL_URL}"
+       target="_blank" rel="noopener">
+      埼玉県公式サイトで検索 →
+    </a>
+    <div class="popup-hint">※ 公式サイトで案件番号を貼り付けて検索してください</div>
+  `;
 
   return `
     <div>
       <div class="popup-title">${escapeHtml(b.name)}</div>
+      ${numberHtml}
       ${body}
       ${linkHtml}
     </div>
@@ -93,6 +113,36 @@ export default function MapView({ bids, selectedId }: Props) {
         spiderfyOnMaxZoom: true,
       });
       map.addLayer(cluster);
+
+      // ポップアップ内「コピー」ボタン押下で案件番号をクリップボードへ
+      map.on("popupopen", (e: any) => {
+        const el: HTMLElement | undefined = e?.popup?.getElement?.();
+        if (!el) return;
+        const btn = el.querySelector<HTMLButtonElement>(".popup-copy-btn");
+        if (!btn || btn.dataset.bound === "1") return;
+        btn.dataset.bound = "1";
+        btn.addEventListener("click", async () => {
+          const txt = btn.getAttribute("data-copy") || "";
+          try {
+            await navigator.clipboard.writeText(txt);
+          } catch {
+            // フォールバック: 旧ブラウザ用
+            const ta = document.createElement("textarea");
+            ta.value = txt;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); } catch {}
+            document.body.removeChild(ta);
+          }
+          const original = btn.textContent || "コピー";
+          btn.textContent = "コピー済み";
+          btn.classList.add("copied");
+          setTimeout(() => {
+            btn.textContent = original;
+            btn.classList.remove("copied");
+          }, 1500);
+        });
+      });
 
       leafletMap.current = map;
       clusterRef.current = cluster;

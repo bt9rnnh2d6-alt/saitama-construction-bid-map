@@ -205,6 +205,39 @@ header .meta {
 }
 .popup-btn:hover { background: #144080; }
 
+/* 案件番号行（コピーボタン付き） */
+.popup-number {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.popup-number-val {
+  font-family: "Consolas", "Courier New", monospace;
+  font-weight: 600;
+  color: #333;
+}
+.popup-copy-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid #1a56a0;
+  background: #fff;
+  color: #1a56a0;
+  border-radius: 3px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.popup-copy-btn:hover { background: #eef3fa; }
+.popup-copy-btn.copied {
+  background: #1a56a0;
+  color: #fff;
+}
+.popup-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #888;
+}
+
 /* レスポンシブ */
 @media (max-width: 768px) {
   .main-container {
