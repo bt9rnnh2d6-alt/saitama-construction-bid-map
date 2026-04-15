@@ -19,10 +19,13 @@ function escapeHtml(s: string | null | undefined): string {
 }
 
 // 埼玉県 入札情報公開システムの公開入口（フレームセット）
-// 各案件ごとの直接URLはセッション依存で作れないため、
-// 公式サイトの入口に遷移し、案件番号で検索してもらう運用とする。
 const SAITAMA_OFFICIAL_URL =
   "https://ebidjk2.ebid2.pref.saitama.lg.jp/koukai/do/KF000ShowAction";
+// 案件詳細の Action URL（POST）
+const SAITAMA_DETAIL_ACTION = {
+  "00": "https://ebidjk2.ebid2.pref.saitama.lg.jp/koukai/do/KK301ReferAction",
+  "11": "https://ebidjk2.ebid2.pref.saitama.lg.jp/koukai/do/KB301ReferAction",
+} as const;
 
 function popupHtml(b: Bid): string {
   const rowsBase: Array<[string, string]> = [
@@ -53,24 +56,88 @@ function popupHtml(b: Bid): string {
        </div>`
     : "";
 
-  // 公式サイトの入口へのボタン（案件番号を検索語としてコピー済みの前提で誘導）
-  const linkHtml = `
-    <a class="popup-btn"
-       href="${SAITAMA_OFFICIAL_URL}"
-       target="_blank" rel="noopener">
-      埼玉県公式サイトで検索 →
-    </a>
-    <div class="popup-hint">※ 公式サイトで案件番号を貼り付けて検索してください</div>
-  `;
+  // 詳細ページへのボタン（POSTフォーム方式）。
+  // クリック時に埼玉県サーバーへ POST を送る隠しフォームを動的に生成して送信する。
+  // case_id が取得できていない案件は、公式トップへのリンクにフォールバック。
+  const hasCaseId = !!(b.case_id && b.case_id.trim());
+  const typeVal = b.type === "11" ? "11" : "00";
+
+  const detailHtml = hasCaseId
+    ? `<button type="button"
+               class="popup-btn popup-detail-btn"
+               data-case-id="${escapeHtml(b.case_id)}"
+               data-type="${typeVal}">
+         案件詳細を開く →
+       </button>
+       <div class="popup-hint">
+         ※ 開けない場合は
+         <a href="${SAITAMA_OFFICIAL_URL}" target="_blank" rel="noopener">公式サイト</a>
+         で案件番号を検索してください
+       </div>`
+    : `<a class="popup-btn"
+          href="${SAITAMA_OFFICIAL_URL}"
+          target="_blank" rel="noopener">
+         埼玉県公式サイトで検索 →
+       </a>
+       <div class="popup-hint">※ 公式サイトで案件番号を貼り付けて検索してください</div>`;
 
   return `
     <div>
       <div class="popup-title">${escapeHtml(b.name)}</div>
       ${numberHtml}
       ${body}
-      ${linkHtml}
+      ${detailHtml}
     </div>
   `;
+}
+
+// クリック時に、埼玉県サイトへ POST を送信する隠しフォームを組み立てて送信する。
+// target="_blank" で新しいタブに詳細ページを開く。
+// （埼玉県のシステムは POST ベースの画面遷移が必須のため、単なる URL では直リンク不可）
+function submitDetailForm(caseId: string, type: "00" | "11") {
+  const action = SAITAMA_DETAIL_ACTION[type];
+  const jspPath =
+    type === "11"
+      ? "/WEB-INF/pages/pub_information/frontsite/KFB301.jsp"
+      : "/WEB-INF/pages/pub_information/frontsite/KFK301.jsp";
+
+  const fields: Record<string, string> = {
+    honGamenJspPath:   jspPath,
+    chotatsuType:      type,
+    select_kikan:      "0000ZZZZZZ",
+    control_no:        caseId,
+    postconv_flg:      "1",
+    initFlg:           "null",
+    editmode:          "",
+    trader_id:         "",
+    leave_branchi_flg: "",
+    SUPPLYTYPE:        "",
+    supplytype:        "",
+    hachukikan:        "",
+    bukyoku:           "",
+    kakakari:          "",
+    A300:              "040",
+  };
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = action;
+  form.target = "_blank";
+  // 新タブのタブナッピング対策
+  form.rel = "noopener";
+
+  for (const [k, v] of Object.entries(fields)) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = k;
+    input.value = v;
+    form.appendChild(input);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+  // DOM から即座に外す（送信後は不要）
+  setTimeout(() => form.remove(), 500);
 }
 
 export default function MapView({ bids, selectedId }: Props) {
@@ -114,34 +181,49 @@ export default function MapView({ bids, selectedId }: Props) {
       });
       map.addLayer(cluster);
 
-      // ポップアップ内「コピー」ボタン押下で案件番号をクリップボードへ
+      // ポップアップが開いた時、内部のボタンにイベントハンドラを登録する
       map.on("popupopen", (e: any) => {
         const el: HTMLElement | undefined = e?.popup?.getElement?.();
         if (!el) return;
-        const btn = el.querySelector<HTMLButtonElement>(".popup-copy-btn");
-        if (!btn || btn.dataset.bound === "1") return;
-        btn.dataset.bound = "1";
-        btn.addEventListener("click", async () => {
-          const txt = btn.getAttribute("data-copy") || "";
-          try {
-            await navigator.clipboard.writeText(txt);
-          } catch {
-            // フォールバック: 旧ブラウザ用
-            const ta = document.createElement("textarea");
-            ta.value = txt;
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand("copy"); } catch {}
-            document.body.removeChild(ta);
-          }
-          const original = btn.textContent || "コピー";
-          btn.textContent = "コピー済み";
-          btn.classList.add("copied");
-          setTimeout(() => {
-            btn.textContent = original;
-            btn.classList.remove("copied");
-          }, 1500);
-        });
+
+        // (1) 案件番号コピーボタン
+        const copyBtn = el.querySelector<HTMLButtonElement>(".popup-copy-btn");
+        if (copyBtn && copyBtn.dataset.bound !== "1") {
+          copyBtn.dataset.bound = "1";
+          copyBtn.addEventListener("click", async () => {
+            const txt = copyBtn.getAttribute("data-copy") || "";
+            try {
+              await navigator.clipboard.writeText(txt);
+            } catch {
+              // フォールバック: 旧ブラウザ用
+              const ta = document.createElement("textarea");
+              ta.value = txt;
+              document.body.appendChild(ta);
+              ta.select();
+              try { document.execCommand("copy"); } catch {}
+              document.body.removeChild(ta);
+            }
+            const original = copyBtn.textContent || "コピー";
+            copyBtn.textContent = "コピー済み";
+            copyBtn.classList.add("copied");
+            setTimeout(() => {
+              copyBtn.textContent = original;
+              copyBtn.classList.remove("copied");
+            }, 1500);
+          });
+        }
+
+        // (2) 案件詳細を開くボタン（POST フォームを動的生成して送信）
+        const detailBtn = el.querySelector<HTMLButtonElement>(".popup-detail-btn");
+        if (detailBtn && detailBtn.dataset.bound !== "1") {
+          detailBtn.dataset.bound = "1";
+          detailBtn.addEventListener("click", () => {
+            const caseId = detailBtn.getAttribute("data-case-id") || "";
+            const type = (detailBtn.getAttribute("data-type") || "00") as "00" | "11";
+            if (!caseId) return;
+            submitDetailForm(caseId, type);
+          });
+        }
       });
 
       leafletMap.current = map;
