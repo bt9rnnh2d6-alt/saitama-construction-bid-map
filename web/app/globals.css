@@ -1,0 +1,230 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN",
+               "Hiragino Sans", Meiryo, sans-serif;
+  background: #f5f7fa;
+  color: #222;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: #1a56a0; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+}
+
+/* ヘッダー */
+header {
+  background: linear-gradient(135deg, #1a56a0 0%, #2c7be5 100%);
+  color: #fff;
+  padding: 10px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 1000;
+}
+header h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+header .meta {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+/* 全体レイアウト */
+.main-container {
+  display: flex;
+  height: calc(100vh - 56px);
+}
+
+#sidebar {
+  width: 380px;
+  background: #fff;
+  border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#map-container {
+  flex: 1;
+  position: relative;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+/* フィルタ */
+.filter-area {
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  background: #fafbfc;
+}
+.filter-area input[type="text"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.filter-area input[type="text"]:focus {
+  outline: none;
+  border-color: #2c7be5;
+}
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.filter-row select {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 8px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+}
+.btn-reset {
+  padding: 6px 12px;
+  border: 1px solid #d0d7de;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.btn-reset:hover { background: #f5f7fa; }
+
+.count-bar {
+  padding: 8px 12px;
+  background: #f0f4f8;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 13px;
+  color: #555;
+}
+
+/* 案件リスト */
+#bid-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.bid-item {
+  padding: 12px;
+  border-bottom: 1px solid #f0f2f5;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.bid-item:hover { background: #f5faff; }
+.bid-item .name {
+  font-weight: 600;
+  color: #1a56a0;
+  margin-bottom: 4px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.bid-item .meta {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.5;
+}
+.bid-item .meta .label {
+  display: inline-block;
+  background: #e7f1ff;
+  color: #1a56a0;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  margin-right: 4px;
+}
+
+.sidebar-footer {
+  padding: 8px 12px;
+  background: #fafbfc;
+  border-top: 1px solid #e9ecef;
+  font-size: 11px;
+  color: #888;
+  text-align: center;
+}
+
+/* 統計パネル */
+#stats-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255,255,255,0.95);
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  font-size: 12px;
+  z-index: 500;
+}
+.stat-row { margin: 2px 0; }
+
+/* Leafletポップアップ */
+.popup-title {
+  font-weight: 600;
+  color: #1a56a0;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+.popup-row {
+  font-size: 12px;
+  margin: 3px 0;
+  line-height: 1.5;
+}
+.popup-row .k {
+  display: inline-block;
+  min-width: 60px;
+  color: #888;
+}
+
+.popup-btn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #1a56a0;
+  color: #fff !important;
+  border-radius: 4px;
+  text-decoration: none !important;
+  font-size: 12px;
+  font-weight: 600;
+}
+.popup-btn:hover { background: #144080; }
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+    height: calc(100vh - 56px);
+  }
+  #sidebar {
+    width: 100%;
+    max-height: 45%;
+    border-right: none;
+    border-bottom: 1px solid #dee2e6;
+  }
+  #map-container { flex: 1; }
+}
+
+/* ローディング */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+}

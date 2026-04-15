@@ -1,0 +1,679 @@
+
+
+
+
+
+
+
+
+<SCRIPT language='Javascript'>
+<!--
+var screentype = 'KFK';
+//-->
+</SCRIPT>
+
+
+
+<META http-equiv="Content-Type" content="text/html; charset=Shift_JIS"> 
+
+
+
+ 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN">
+
+<HTML>
+<HEAD>
+<META http-equiv="Content-Type" content="text/html; charset=Shift_JIS">
+<META http-equiv="Content-Style-Type" content="text/css">
+</HEAD>
+<LINK rel="stylesheet" type="text/css" href='/koukai/css/default.css'>
+<LINK rel="stylesheet" type="text/css" href='/koukai/css/cystage.css'>
+<LINK rel="stylesheet" type="text/css" href='/koukai/css/koukai.css'>
+<script type='text/javascript' src='/koukai/commons/koukai.js'></script>
+<script type="text/javascript">
+var mcode = new Array();
+var mMsg = new Array();
+
+
+ mcode[0]="PQBE10070";
+ mMsg[0]="公開日等の登録内容を見直し、再度操作を行ってください。メッセージコード：PQBE10070";
+
+
+ mcode[1]="PQBE0014E";
+ mMsg[1]="備考は、全角１００文字以内で入力してください。\r（改行文字は２文字としてカウントされます）メッセージコード：PQBE0014E";
+
+
+ mcode[2]="PQBE0058E";
+ mMsg[2]="システム日付が取得できません。メッセージコード：PQBE0058E";
+
+
+ mcode[3]="PQBE0006I";
+ mMsg[3]="選択されたデータを公開します。\rよろしいですか？メッセージコード：PQBE0006I";
+
+
+ mcode[4]="PQBE0002E";
+ mMsg[4]="削除したいデータを選択して下さい。メッセージコード：PQBE0002E";
+
+
+ mcode[5]="PQBE0046E";
+ mMsg[5]="入力された受付番号は登録されていません。メッセージコード：PQBE0046E";
+
+
+ mcode[6]="PQBE0038E";
+ mMsg[6]="契約日を指定してください。メッセージコード：PQBE0038E";
+
+
+ mcode[7]="PQBE0026E";
+ mMsg[7]="年を指定してください。メッセージコード：PQBE0026E";
+
+
+ mcode[8]="PQBE0018E";
+ mMsg[8]="選択された入札方式では指名状況登録の入力はできません。メッセージコード：PQBE0018E";
+
+
+ mcode[9]="PQBE0006E";
+ mMsg[9]="業務名を入力してください。メッセージコード：PQBE0006E";
+
+
+ mcode[10]="PQBE0085E";
+ mMsg[10]="入札公告等ファイルのサイズが10485760バイトを超えているため、登録できません。メッセージコード：PQBE0085E";
+
+
+ mcode[11]="PQBE0001I";
+ mMsg[11]="条件が指定されていないため全件を表示します。\rよろしいですか？メッセージコード：PQBE0001I";
+
+
+ mcode[12]="PP0E0041I";
+ mMsg[12]="入力したパスワードの有効期限が切れています。\n競争入札参加資格申請受付システムにログインし、パスワード変更を行ってください。メッセージコード：PP0E0041I";
+
+
+ mcode[13]="PQBE0041E";
+ mMsg[13]="契約の相手方の商号又は名称を入力してください。メッセージコード：PQBE0041E";
+
+
+ mcode[14]="PQBE0073E";
+ mMsg[14]="業者IDを入力してください。メッセージコード：PQBE0073E";
+
+
+ mcode[15]="PQBE0021E";
+ mMsg[15]="予期せぬエラーが発生しました。メッセージコード：PQBE0021E";
+
+
+ mcode[16]="PQBE0065E";
+ mMsg[16]="備考は、全角２５６文字以内で入力してください。\r（改行文字は２文字としてカウントされます）メッセージコード：PQBE0065E";
+
+
+ mcode[17]="PQBE0053E";
+ mMsg[17]="トップページで調達機関名を指定してください。メッセージコード：PQBE0053E";
+
+
+ mcode[18]="PQBE0005I";
+ mMsg[18]="選択されたデータを削除します。\rよろしいですか？メッセージコード：PQBE0005I";
+
+
+ mcode[19]="PQBE0001E";
+ mMsg[19]="公開したいデータを選択して下さい。メッセージコード：PQBE0001E";
+
+
+ mcode[20]="PQBE0077E";
+ mMsg[20]="ご指定の入札方式では２者以上の登録はできません。メッセージコード：PQBE0077E";
+
+
+ mcode[21]="PQBE0081I";
+ mMsg[21]="調達区分を指定してください。メッセージコード：PQBE0081I";
+
+
+ mcode[22]="PQBE0041I";
+ mMsg[22]="入力したパスワードの有効期限が切れています。パスワードを更新するには、パスワード変更ボタンをクリックしてください。メッセージコード：PQBE0041I";
+
+
+ mcode[23]="PP6E0012E";
+ mMsg[23]="西暦年月形式の公開日を入力してくださいメッセージコード：PP6E0012E";
+
+
+ mcode[24]="PQBE0069E";
+ mMsg[24]="選択された調査基準等価格区分では調査基準等価格の入力はできません。メッセージコード：PQBE0069E";
+
+
+ mcode[25]="PQBE0025E";
+ mMsg[25]="選択されたファイルには、削除のチェックが付いています。メッセージコード：PQBE0025E";
+
+
+ mcode[26]="PQBE0057E";
+ mMsg[26]="年度の取得に失敗しました。電子入札ヘルプデスクにお問い合わせください。メッセージコード：PQBE0057E";
+
+
+ mcode[27]="PQBE0013E";
+ mMsg[27]="備考は、全角１２８文字以内で入力してください。\r（改行文字は２文字としてカウントされます）メッセージコード：PQBE0013E";
+
+
+ mcode[28]="PQBE0005E";
+ mMsg[28]="調達案件名称を入力してください。メッセージコード：PQBE0005E";
+
+
+ mcode[29]="PQBE0049E";
+ mMsg[29]="全角文字以外は入力できませんメッセージコード：PQBE0049E";
+
+
+ mcode[30]="PQBE0029E";
+ mMsg[30]="時を指定してください。メッセージコード：PQBE0029E";
+
+
+ mcode[31]="PQBE0017E";
+ mMsg[31]="業者名を入力してください。メッセージコード：PQBE0017E";
+
+
+ mcode[32]="PQBE0009E";
+ mMsg[32]="工事番号を入力してください。メッセージコード：PQBE0009E";
+
+
+ mcode[33]="PQBE0072E";
+ mMsg[33]="物品種別は１種類のみ選択してください。メッセージコード：PQBE0072E";
+
+
+ mcode[34]="PP0E0040E";
+ mMsg[34]="ユーザID・パスワードの入力に誤りがあります。再入力してください。メッセージコード：PP0E0040E";
+
+
+ mcode[35]="PQBE0052E";
+ mMsg[35]="選択された入札方式では入札参加資格審査結果の入力はできません。メッセージコード：PQBE0052E";
+
+
+ mcode[36]="PQBE0040E";
+ mMsg[36]="契約の相手方の住所を入力してください。メッセージコード：PQBE0040E";
+
+
+ mcode[37]="PQBE0076E";
+ mMsg[37]="期間の指定が不正です。メッセージコード：PQBE0076E";
+
+
+ mcode[38]="PQBE0020E";
+ mMsg[38]="該当するデータは存在していません。メッセージコード：PQBE0020E";
+
+
+ mcode[39]="PQBE0012E";
+ mMsg[39]="入力日付が不正です。メッセージコード：PQBE0012E";
+
+
+ mcode[40]="PQBE0056E";
+ mMsg[40]="半角数値以外は入力できません。メッセージコード：PQBE0056E";
+
+
+ mcode[41]="PQBE00XXE";
+ mMsg[41]="選択された調査基準等価格区分では調査基準等価格の入力はできません。メッセージコード：PQBE00XXE";
+
+
+ mcode[42]="PQBE0004I";
+ mMsg[42]="条件が指定されていないため全件を表示します。\rよろしいですか？メッセージコード：PQBE0004I";
+
+
+ mcode[43]="PP6E0005I";
+ mMsg[43]="データを削除します。\rよろしいですか？メッセージコード：PP6E0005I";
+
+
+ mcode[44]="PQBE0084I";
+ mMsg[44]="業者種別を選択してください。メッセージコード：PQBE0084I";
+
+
+ mcode[45]="PQBE0080E";
+ mMsg[45]="終了年月日と開始年月日の範囲は最大2年間となります。メッセージコード：PQBE0080E";
+
+
+ mcode[46]="PQBE0068E";
+ mMsg[46]="資格の種類を選択してください。メッセージコード：PQBE0068E";
+
+
+ mcode[47]="PQBE0024E";
+ mMsg[47]="発注図書ファイルのサイズ合計が20971520バイトを超えているため、登録できません。メッセージコード：PQBE0024E";
+
+
+ mcode[48]="PQBE0016E";
+ mMsg[48]="業者番号を入力してください。メッセージコード：PQBE0016E";
+
+
+ mcode[49]="PQBE0004E";
+ mMsg[49]="使用するデータは現在他職員更新中のため、しばらくお待ちください。メッセージコード：PQBE0004E";
+
+
+ mcode[50]="PQBE0008I";
+ mMsg[50]="選択されたデータを公開取り戻しします。\rよろしいですか？メッセージコード：PQBE0008I";
+
+
+ mcode[51]="PQBE0048E";
+ mMsg[51]="お知らせを入力してください。メッセージコード：PQBE0048E";
+
+
+ mcode[52]="PQBE0028E";
+ mMsg[52]="日を指定してください。メッセージコード：PQBE0028E";
+
+
+ mcode[53]="PQBE0008E";
+ mMsg[53]="許可されていない半角文字が入力されています。メッセージコード：PQBE0008E";
+
+
+ mcode[54]="PQBE0071E";
+ mMsg[54]="依頼種別は１種類のみ選択してください。メッセージコード：PQBE0071E";
+
+
+ mcode[55]="PP6E0002I";
+ mMsg[55]="入力した内容を保存します。よろしいですか？メッセージコード：PP6E0002I";
+
+
+ mcode[56]="PQBE0063E";
+ mMsg[56]="委託番号を入力してください。メッセージコード：PQBE0063E";
+
+
+ mcode[57]="PQBE0051E";
+ mMsg[57]="お知らせは、全角２０００文字以内で入力してください。\r（改行文字は２文字としてカウントされます）メッセージコード：PQBE0051E";
+
+
+ mcode[58]="PQBE0003I";
+ mMsg[58]="入力した内容を保存せずに、一覧画面へ戻ります。\rよろしいですか？メッセージコード：PQBE0003I";
+
+
+ mcode[59]="PQBE0087E";
+ mMsg[59]="入力できる文字数は、60桁までです。メッセージコード：PQBE0087E";
+
+
+ mcode[60]="PQBE0075E";
+ mMsg[60]="全角文字は入力できませんメッセージコード：PQBE0075E";
+
+
+ mcode[61]="PQBE0031E";
+ mMsg[61]="実在する日付を指定してください。メッセージコード：PQBE0031E";
+
+
+ mcode[62]="PQBE0023E";
+ mMsg[62]="選択されたファイルは存在しません。メッセージコード：PQBE0023E";
+
+
+ mcode[63]="PQBE0067E";
+ mMsg[63]="該当する発注情報が存在しません。メッセージコード：PQBE0067E";
+
+
+ mcode[64]="PQBE0011E";
+ mMsg[64]="案件概要は、全角１００文字以内で入力してください。\r（改行文字は２文字としてカウントされます）メッセージコード：PQBE0011E";
+
+
+ mcode[65]="PQBE0055E";
+ mMsg[65]="タイトルを入力してください。メッセージコード：PQBE0055E";
+
+
+ mcode[66]="PQBE0083I";
+ mMsg[66]="調達機関名を選択してください。メッセージコード：PQBE0083I";
+
+
+ mcode[67]="PQBE0007I";
+ mMsg[67]="公開中データを複写します。\n\nよろしいですか？メッセージコード：PQBE0007I";
+
+
+ mcode[68]="PQBE0003E";
+ mMsg[68]="公開日が登録されていないため、公開はできません。メッセージコード：PQBE0003E";
+
+
+ mcode[69]="PQBE0047E";
+ mMsg[69]="入力日付が不正です。メッセージコード：PQBE0047E";
+
+
+ mcode[70]="PQBE0035E";
+ mMsg[70]="指名理由を指定してください。メッセージコード：PQBE0035E";
+
+
+ mcode[71]="PQBE0079E";
+ mMsg[71]="指名状況登録の業者番号欄に同じ番号を入力しないでください。メッセージコード：PQBE0079E";
+
+
+ mcode[72]="PQBE0027E";
+ mMsg[72]="月を指定してください。メッセージコード：PQBE0027E";
+
+
+ mcode[73]="PQBE0015E";
+ mMsg[73]="指名理由を入力してください。メッセージコード：PQBE0015E";
+
+
+ mcode[74]="PQBE0007E";
+ mMsg[74]="公開日を指定してください。メッセージコード：PQBE0007E";
+
+
+ mcode[75]="PQBE0039E";
+ mMsg[75]="契約金額を指定してください。メッセージコード：PQBE0039E";
+
+
+ mcode[76]="PQBE0019E";
+ mMsg[76]="業務内容は、全角１００文字以内で入力してください。\r（改行文字は２文字としてカウントされます）メッセージコード：PQBE0019E";
+
+
+ mcode[77]="PQBE0050E";
+ mMsg[77]="全角文字以外は入力できませんメッセージコード：PQBE0050E";
+
+
+ mcode[78]="PQBE0082E";
+ mMsg[78]="公開終了日を指定してください。メッセージコード：PQBE0082E";
+
+
+ mcode[79]="PQBE0030E";
+ mMsg[79]="分を指定してください。メッセージコード：PQBE0030E";
+
+
+ mcode[80]="PQBE0074E";
+ mMsg[80]="物品機能は埼玉県のみ使用できます。メッセージコード：PQBE0074E";
+
+
+ mcode[81]="PQBE0010E";
+ mMsg[81]="案件番号を入力してください。メッセージコード：PQBE0010E";
+
+
+ mcode[82]="PQBE0054E";
+ mMsg[82]="概要は、全角１００文字以内で入力してください。\r（改行文字は２文字としてカウントされます）メッセージコード：PQBE0054E";
+
+
+ mcode[83]="PP0E0010E";
+ mMsg[83]="入力必須項目が入力されていません。メッセージコード：PP0E0010E";
+
+
+ mcode[84]="PQBE0002I";
+ mMsg[84]="入力した内容を保存します。よろしいですか？メッセージコード：PQBE0002I";
+
+
+ mcode[85]="PQBE0042E";
+ mMsg[85]="契約の相手方の代表者氏名を入力してください。メッセージコード：PQBE0042E";
+
+
+ mcode[86]="PQBE0086E";
+ mMsg[86]="結果図書ファイルのサイズが5242880バイトを超えているため、登録できません。メッセージコード：PQBE0086E";
+
+
+ mcode[87]="PQBE0078E";
+ mMsg[87]="終了年で設定できる最大値は開始年＋2年となります。メッセージコード：PQBE0078E";
+
+
+ mcode[88]="PQBE0066E";
+ mMsg[88]="該当する入札・見積結果が存在しません。メッセージコード：PQBE0066E";
+
+
+ mcode[89]="PQBE0090E";
+ mMsg[89]="市町村を選択してください。メッセージコード：PQBE0090E";
+
+
+ mcode[90]="PQBE0070E";
+ mMsg[90]="電話番号の入力形式に誤りがあります。メッセージコード：PQBE0070E";
+
+
+
+function getMessage(code){
+ for (j=0;j<mcode.length;j++){
+   if (code==mcode[j]){
+   return mMsg[j];
+   }
+ }
+return false;
+}
+
+function doConfirm(){
+    str="";
+    if((str == "")||(str=="000")){
+       alert(getMessage('PQBE0053E'));
+     }else{
+        jskfkLink(5);
+     }
+}
+//ADD-S 2013/03/12
+//埼玉-公開_5-45受注者トップメニュー削除
+function initMenu() {
+  chotatsuType = parent.frmRIGHT.document.getElementById("chotatsuType");
+  if (chotatsuType == null) {
+    return;
+  }
+  if (chotatsuType.value == "") {
+    with(parent.frmRIGHT) {
+    document.getElementById("link1").disabled = true;
+    document.getElementById("link2").disabled = true;
+    document.getElementById("link3").disabled = true;
+    document.getElementById("link4").disabled = true;
+    document.getElementById("link5").disabled = true;
+    document.getElementById("link6").disabled = true;
+
+    document.getElementById("link1").onclick = function(){};
+    document.getElementById("link2").onclick = function(){};
+    document.getElementById("link3").onclick = function(){};
+    document.getElementById("link4").onclick = function(){};
+    document.getElementById("link5").onclick = function(){};
+    document.getElementById("link6").onclick = function(){};
+
+    //20240801 マルチブラウザ対応 問題No09：活性非活性表示不正 update start
+    // document.getElementById("link1").className = "";
+    // document.getElementById("link2").className = "";
+    // document.getElementById("link3").className = "";
+    // document.getElementById("link4").className = "";
+    // document.getElementById("link5").className = "";
+    // document.getElementById("link6").className = "";
+    document.getElementById("link1").className = "ColorGRAY";
+    document.getElementById("link2").className = "ColorGRAY";
+    document.getElementById("link3").className = "ColorGRAY";
+    document.getElementById("link4").className = "ColorGRAY";
+    document.getElementById("link5").className = "ColorGRAY";
+    document.getElementById("link6").className = "ColorGRAY";
+    //20240801 マルチブラウザ対応 問題No09：活性非活性表示不正 update end
+    }
+
+    document.getElementById("btnLink1").className = "GRAY";
+    document.getElementById("btnLink2").className = "GRAY";
+    document.getElementById("btnLink3").className = "GRAY";
+    document.getElementById("btnLink4").className = "GRAY";
+    document.getElementById("btnLink5").className = "GRAY";
+    document.getElementById("btnLink6").className = "GRAY";
+
+    document.getElementById("btnLink1").onmouseover = function(){};
+    document.getElementById("btnLink2").onmouseover = function(){};
+    document.getElementById("btnLink3").onmouseover = function(){};
+    document.getElementById("btnLink4").onmouseover = function(){};
+    document.getElementById("btnLink5").onmouseover = function(){};
+    document.getElementById("btnLink6").onmouseover = function(){};
+
+    
+    
+    document.getElementById("btnLink1_1").onclick = function(){};
+    document.getElementById("btnLink2_1").onclick = function(){};
+    document.getElementById("btnLink3_1").onclick = function(){};
+    document.getElementById("btnLink4_1").onclick = function(){};
+    document.getElementById("btnLink5_1").onclick = function(){};
+    document.getElementById("btnLink6_1").onclick = function(){};
+    
+
+    
+    document.getElementById("btnLink1").tabIndex = "-1";
+    document.getElementById("btnLink2").tabIndex = "-1";
+    document.getElementById("btnLink3").tabIndex = "-1";
+    document.getElementById("btnLink4").tabIndex = "-1";
+    document.getElementById("btnLink5").tabIndex = "-1";
+    document.getElementById("btnLink6").tabIndex = "-1";
+    
+
+  } else if (chotatsuType.value == "00") {
+    with(parent.frmRIGHT) {
+    document.getElementById("link1").disabled = false;
+    document.getElementById("link2").disabled = false;
+    document.getElementById("link3").disabled = false;
+    document.getElementById("link4").disabled = true;
+    document.getElementById("link5").disabled = false;
+    document.getElementById("link6").disabled = false;
+
+    document.getElementById("link1").onclick = function(){jskfkLink(1);};
+    document.getElementById("link2").onclick = function(){jskfkLink(2);};
+    document.getElementById("link3").onclick = function(){jskfkLink(3);};
+    document.getElementById("link4").onclick = function(){};
+    document.getElementById("link5").onclick = function(){jskfkLink(4);};
+    document.getElementById("link6").onclick = function(){jskfkLink(5);};
+
+    document.getElementById("link1").className = "ATYPE";
+    document.getElementById("link2").className = "ATYPE";
+    document.getElementById("link3").className = "ATYPE";
+    //20240801 マルチブラウザ対応 問題No09：活性非活性表示不正 update start
+    // document.getElementById("link4").className = "";
+    document.getElementById("link4").className = "ColorGRAY";
+    //20240801 マルチブラウザ対応 問題No09：活性非活性表示不正 update end
+    document.getElementById("link5").className = "ATYPE";
+    document.getElementById("link6").className = "ATYPE";
+    }
+
+    document.getElementById("btnLink1").className = "ATYPE";
+    document.getElementById("btnLink2").className = "ATYPE";
+    document.getElementById("btnLink3").className = "ATYPE";
+    document.getElementById("btnLink4").className = "GRAY";
+    document.getElementById("btnLink5").className = "ATYPE";
+    document.getElementById("btnLink6").className = "ATYPE";
+
+    document.getElementById("btnLink1").onmouseover = function(){this.src='../images/koukai/OrderPlanRefer_S.gif';};
+    document.getElementById("btnLink2").onmouseover = function(){this.src='../images/koukai/OrderInfoRefer_S.gif';};
+    document.getElementById("btnLink3").onmouseover = function(){this.src='../images/koukai/KyosoSankaShikakuRegist_S.gif';};
+    document.getElementById("btnLink4").onmouseover = function(){};
+    document.getElementById("btnLink5").onmouseover = function(){this.src='../images/koukai/MitumoriInfoSelect_S.gif';};
+    document.getElementById("btnLink6").onmouseover = function(){this.src='../images/koukai/KyosoSankaShikakuRefer_S.gif';};
+
+    
+    
+    document.getElementById("btnLink1_1").onclick = function(){jskfkLink(1);};
+    document.getElementById("btnLink2_1").onclick = function(){jskfkLink(2);};
+    document.getElementById("btnLink3_1").onclick = function(){jskfkLink(3);};
+    document.getElementById("btnLink4_1").onclick = function(){};
+    document.getElementById("btnLink5_1").onclick = function(){jskfkLink(4);};
+    document.getElementById("btnLink6_1").onclick = function(){jskfkLink(5);};
+    
+
+    
+    document.getElementById("btnLink1").tabIndex = "0";
+    document.getElementById("btnLink2").tabIndex = "0";
+    document.getElementById("btnLink3").tabIndex = "0";
+    document.getElementById("btnLink4").tabIndex = "-1";
+    document.getElementById("btnLink5").tabIndex = "0";
+    document.getElementById("btnLink6").tabIndex = "0";
+    
+
+  } else if (chotatsuType.value == "11") {
+    with(parent.frmRIGHT) {
+    document.getElementById("link1").disabled = true;
+    document.getElementById("link2").disabled = false;
+    document.getElementById("link3").disabled = false;
+    document.getElementById("link4").disabled = false;
+    document.getElementById("link5").disabled = false;
+    document.getElementById("link6").disabled = false;
+
+    document.getElementById("link1").onclick = function(){};
+    document.getElementById("link2").onclick = function(){jskfbLink(1);};
+    document.getElementById("link3").onclick = function(){jskfbLink(2);};
+    document.getElementById("link4").onclick = function(){jskfbLink(7);};
+    document.getElementById("link5").onclick = function(){jskfbLink(3);};
+    document.getElementById("link6").onclick = function(){jskfbLink(4);};
+
+    //20240801 マルチブラウザ対応 問題No09：活性非活性表示不正 update start
+    // document.getElementById("link1").className = "";
+    document.getElementById("link1").className = "ColorGRAY";
+    //20240801 マルチブラウザ対応 問題No09：活性非活性表示不正 update end
+    document.getElementById("link2").className = "ATYPE";
+    document.getElementById("link3").className = "ATYPE";
+    document.getElementById("link4").className = "ATYPE";
+    document.getElementById("link5").className = "ATYPE";
+    document.getElementById("link6").className = "ATYPE";
+    }
+
+    document.getElementById("btnLink1").className = "GRAY";
+    document.getElementById("btnLink2").className = "ATYPE";
+    document.getElementById("btnLink3").className = "ATYPE";
+    document.getElementById("btnLink4").className = "ATYPE";
+    document.getElementById("btnLink5").className = "ATYPE";
+    document.getElementById("btnLink6").className = "ATYPE";
+
+    document.getElementById("btnLink1").onmouseover = function(){};
+    document.getElementById("btnLink2").onmouseover = function(){this.src='../images/koukai/OrderInfoRefer_S.gif';};
+    document.getElementById("btnLink3").onmouseover = function(){this.src='../images/koukai/KyosoSankaShikakuRegist_S.gif';};
+    document.getElementById("btnLink4").onmouseover = function(){this.src='../images/koukai/ZuiiKeiyakuAnkenSearch_S.gif';};
+    document.getElementById("btnLink5").onmouseover = function(){this.src='../images/koukai/MitumoriInfoSelect_S.gif';};
+    document.getElementById("btnLink6").onmouseover = function(){this.src='../images/koukai/KyosoSankaShikakuRefer_S.gif';};
+
+    
+    
+    document.getElementById("btnLink1_1").onclick = function(){};
+    document.getElementById("btnLink2_1").onclick = function(){jskfbLink(1);};
+    document.getElementById("btnLink3_1").onclick = function(){jskfbLink(2);};
+    document.getElementById("btnLink4_1").onclick = function(){jskfbLink(7);};
+    document.getElementById("btnLink5_1").onclick = function(){jskfbLink(3);};
+    document.getElementById("btnLink6_1").onclick = function(){jskfbLink(4);};
+    
+
+    
+    document.getElementById("btnLink1").tabIndex = "-1";
+    document.getElementById("btnLink2").tabIndex = "0";
+    document.getElementById("btnLink3").tabIndex = "0";
+    document.getElementById("btnLink4").tabIndex = "0";
+    document.getElementById("btnLink5").tabIndex = "0";
+    document.getElementById("btnLink6").tabIndex = "0";
+    
+  }
+}
+//ADD-E 2013/03/12
+</script>
+
+
+<BODY class="KKMB" onLoad="initMenu();" tabindex="-1">
+
+	<FORM name="kfkForm" method="post">
+	<INPUT name="chotatsuType" type="hidden">
+		<DIV class="MENU_TITLE_LEFT">調達情報の閲覧<BR>（受注者用）</DIV>
+		<TABLE>
+
+
+			<TR>
+				
+				
+				<TD><a href="#" id="btnLink1_1" onClick="jskfkLink(1);" tabindex="-1" ><IMG tabindex="0" id="btnLink1" src="../images/koukai/OrderPlanRefer_N.gif?20171201-01" class="ATYPE" onmouseover="this.src='../images/koukai/OrderPlanRefer_S.gif?20171201-01';" onmouseout="this.src='../images/koukai/OrderPlanRefer_N.gif?20171201-01';" onfocus="this.src='../images/koukai/OrderPlanRefer_S.gif?20171201-01';" onblur="this.src='../images/koukai/OrderPlanRefer_N.gif?20171201-01';" alt="発注見通し情報検索"></a></TD>
+				
+			</TR>
+			<TR>
+				
+				
+				<TD><a href="#" id="btnLink2_1" onClick="jskfkLink(2);" tabindex="-1" ><IMG tabindex="0" id="btnLink2" src="../images/koukai/OrderInfoRefer_N.gif?20171201-01" class="ATYPE" onmouseover="this.src='../images/koukai/OrderInfoRefer_S.gif?20171201-01';" onmouseout="this.src='../images/koukai/OrderInfoRefer_N.gif?20171201-01';" onfocus="this.src='../images/koukai/OrderInfoRefer_S.gif?20171201-01';" onblur="this.src='../images/koukai/OrderInfoRefer_N.gif?20171201-01';" alt="発注情報検索"></a></TD>
+				
+			</TR>
+			<TR>
+				
+				
+				<TD><a href="#" id="btnLink3_1" onClick="jskfkLink(3);" tabindex="-1" ><IMG tabindex="0" id="btnLink3" src="../images/koukai/KyosoSankaShikakuRegist_N.gif?20171201-01" class="ATYPE" onmouseover="this.src='../images/koukai/KyosoSankaShikakuRegist_S.gif?20171201-01';" onmouseout="this.src='../images/koukai/KyosoSankaShikakuRegist_N.gif?20171201-01';" onfocus="this.src='../images/koukai/KyosoSankaShikakuRegist_S.gif?20171201-01';" onblur="this.src='../images/koukai/KyosoSankaShikakuRegist_N.gif?20171201-01';" alt="指名競争入札案件情報検索"></a></TD>
+				
+			</TR>
+			<TR>
+				
+				
+				<TD><a href="#" id="btnLink4_1" onClick="jskfkLink(6);" tabindex="-1" ><IMG tabindex="0" id="btnLink4" src="../images/koukai/ZuiiKeiyakuAnkenSearch_N.gif?20171201-01" class="ATYPE" onmouseover="this.src='../images/koukai/ZuiiKeiyakuAnkenSearch_S.gif?20171201-01';" onmouseout="this.src='../images/koukai/ZuiiKeiyakuAnkenSearch_N.gif?20171201-01';" onfocus="this.src='../images/koukai/ZuiiKeiyakuAnkenSearch_S.gif?20171201-01';" onblur="this.src='../images/koukai/ZuiiKeiyakuAnkenSearch_N.gif?20171201-01';" alt="オープンカウンタ案件情報検索"></a></TD>
+				
+			</TR>
+			<TR>
+				
+				
+				<TD><a href="#" id="btnLink5_1" onClick="jskfkLink(4);" tabindex="-1" ><IMG tabindex="0" id="btnLink5" src="../images/koukai/MitumoriInfoSelect_N.gif?20171201-01" class="ATYPE" onmouseover="this.src='../images/koukai/MitumoriInfoSelect_S.gif?20171201-01';" onmouseout="this.src='../images/koukai/MitumoriInfoSelect_N.gif?20171201-01';" onfocus="this.src='../images/koukai/MitumoriInfoSelect_S.gif?20171201-01';" onblur="this.src='../images/koukai/MitumoriInfoSelect_N.gif?20171201-01';" alt="入札・見積結果情報検索"></a></TD>
+				
+			</TR>
+			<TR>
+				
+				
+				<TD><a href="#" id="btnLink6_1" onClick="jskfkLink(5);" tabindex="-1" ><IMG tabindex="0" id="btnLink6" src="../images/koukai/KyosoSankaShikakuRefer_N.gif?20171201-01" class="ATYPE" onmouseover="this.src='../images/koukai/KyosoSankaShikakuRefer_S.gif?20171201-01';" onmouseout="this.src='../images/koukai/KyosoSankaShikakuRefer_N.gif?20171201-01';" onfocus="this.src='../images/koukai/KyosoSankaShikakuRefer_S.gif?20171201-01';" onblur="this.src='../images/koukai/KyosoSankaShikakuRefer_N.gif?20171201-01';" alt="競争入札参加資格者情報検索"></a></TD>
+				
+			</TR>
+
+
+
+
+
+
+
+			<TR>
+				
+				
+				<TD><a href="#" onClick="jskfkLink(7);" tabindex="-1" ><IMG tabindex="0" src="../images/koukai/AccepterTop_N.gif?20171201-01" class="ATYPE" onmouseover="this.src='../images/koukai/AccepterTop_S.gif?20171201-01';" onmouseout="this.src='../images/koukai/AccepterTop_N.gif?20171201-01';" onfocus="this.src='../images/koukai/AccepterTop_S.gif?20171201-01';" onblur="this.src='../images/koukai/AccepterTop_N.gif?20171201-01';" alt="受注者用トップメニューへ"></a></TD>
+				
+			<TR>
+		</TABLE>
+<INPUT name="gyosyu_type" type="hidden">
+	</FORM>
+</BODY>
+<!-- -->
+</HTML>

@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>埼玉県 建設工事 入札情報マップ</title>
+
+  <!-- Leaflet.js (地図ライブラリ・無料・APIキー不要) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Leaflet.markercluster (マーカークラスタリング) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <style>
+    /* ===== ベーススタイル ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Meiryo', 'メイリオ', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== ヘッダー ===== */
+    header {
+      background: linear-gradient(135deg, #1a56a0 0%, #2c7be5 100%);
+      color: white;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+    header h1 {
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    header h1 .icon { font-size: 20px; }
+    .header-meta {
+      font-size: 11px;
+      opacity: 0.85;
+      text-align: right;
+    }
+
+    /* ===== メインレイアウト ===== */
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ===== サイドバー ===== */
+    #sidebar {
+      width: 320px;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #ddd;
+      flex-shrink: 0;
+      transition: width 0.3s ease;
+    }
+    #sidebar.collapsed { width: 0; overflow: hidden; }
+
+    /* 検索・フィルターエリア */
+    .filter-area {
+      padding: 10px 12px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .filter-area input[type="text"] {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      margin-bottom: 6px;
+    }
+    .filter-area input[type="text"]:focus {
+      outline: none;
+      border-color: #2c7be5;
+      box-shadow: 0 0 0 2px rgba(44,123,229,0.15);
+    }
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .filter-row select {
+      flex: 1;
+      padding: 5px 6px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 12px;
+      font-family: inherit;
+      background: white;
+    }
+    .filter-row select:focus { outline: none; border-color: #2c7be5; }
+    .btn-reset {
+      padding: 5px 10px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-reset:hover { background: #5a6268; }
+
+    /* 件数バッジ */
+    .count-bar {
+      padding: 6px 12px;
+      font-size: 12px;
+      color: #555;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+    .count-bar strong { color: #1a56a0; }
+
+    /* リストエリア */
+    #bid-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+    }
+    .bid-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .bid-item:hover { background: #e8f0fd; }
+    .bid-item.active { background: #d4e6ff; border-left: 3px solid #1a56a0; }
+    .bid-item.no-coords { opacity: 0.65; }
+
+    .bid-name {
+      font-size: 13px;
+      font-weight: bold;
+      color: #1a56a0;
+      line-height: 1.4;
+      margin-bottom: 3px;
+    }
+    .bid-org {
+      font-size: 11px;
+      color: #777;
+      margin-bottom: 2px;
+    }
+    .bid-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .tag {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    .tag-location { background: #e8f5e9; color: #2e7d32; }
+    .tag-method { background: #fff3e0; color: #e65100; }
+    .tag-date { background: #e3f2fd; color: #1565c0; }
+    .tag-no-map { background: #fce4ec; color: #c62828; }
+
+    /* スクロールバースタイル */
+    #bid-list::-webkit-scrollbar { width: 5px; }
+    #bid-list::-webkit-scrollbar-track { background: #f1f1f1; }
+    #bid-list::-webkit-scrollbar-thumb { background: #bbb; border-radius: 3px; }
+
+    /* 更新ボタン */
+    .sidebar-footer {
+      padding: 8px 12px;
+      background: #f8f9fa;
+      border-top: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #888;
+    }
+    .btn-source {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 4px 10px;
+      background: #1a56a0;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-source:hover { background: #154385; }
+
+    /* ===== 地図エリア ===== */
+    #map-container {
+      flex: 1;
+      position: relative;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* サイドバー開閉ボタン */
+    #toggle-sidebar {
+      position: absolute;
+      left: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1100;
+      background: #1a56a0;
+      color: white;
+      border: none;
+      border-radius: 0 6px 6px 0;
+      width: 16px;
+      height: 48px;
+      cursor: pointer;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 2px 0 6px rgba(0,0,0,0.2);
+    }
+
+    /* ===== ポップアップスタイル ===== */
+    .popup-content { font-family: inherit; min-width: 220px; max-width: 300px; }
+    .popup-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1a56a0;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .popup-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .popup-table tr td { padding: 3px 0; vertical-align: top; }
+    .popup-table tr td:first-child {
+      color: #888;
+      white-space: nowrap;
+      padding-right: 8px;
+      width: 80px;
+    }
+    .popup-link {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 12px;
+      background: #1a56a0;
+      color: white;
+      border-radius: 4px;
+      font-size: 11px;
+      text-decoration: none;
+    }
+    .popup-link:hover { background: #154385; }
+
+    /* ===== ローディング画面 ===== */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 5px solid #e0e0e0;
+      border-top-color: #1a56a0;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-overlay p { font-size: 14px; color: #555; }
+
+    /* ===== エラーバナー ===== */
+    #error-banner {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #c62828;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      z-index: 9000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      max-width: 90%;
+      text-align: center;
+    }
+
+    /* ===== 統計パネル (右上) ===== */
+    #stats-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 800;
+      background: white;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 11px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      pointer-events: none;
+    }
+    #stats-panel .stat-row { color: #555; margin: 1px 0; }
+    #stats-panel .stat-row strong { color: #1a56a0; }
+
+    /* レスポンシブ対応 */
+    @media (max-width: 600px) {
+      #sidebar { width: 100%; position: absolute; z-index: 900; height: 50%; bottom: 0; top: auto; }
+      #sidebar.collapsed { height: 0; width: 100%; }
+      #toggle-sidebar { left: 50%; top: -14px; transform: translateX(-50%); border-radius: 6px 6px 0 0; width: 48px; height: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<header>
+  <h1>
+    <span class="icon">🏗️</span>
+    埼玉県 建設工事 入札情報マップ
+  </h1>
+  <div class="header-meta" id="header-meta">データ読み込み中...</div>
+</header>
+
+<!-- メインレイアウト -->
+<div class="main-container">
+
+  <!-- サイドバー -->
+  <div id="sidebar">
+    <div class="filter-area">
+      <input type="text" id="search-input" placeholder="🔍 案件名・機関名で検索..." oninput="applyFilters()">
+      <div class="filter-row">
+        <select id="filter-category" onchange="applyFilters()">
+          <option value="">工種: すべて</option>
+        </select>
+        <select id="filter-method" onchange="applyFilters()">
+          <option value="">入札方式: すべて</option>
+        </select>
+        <select id="filter-org" onchange="applyFilters()">
+          <option value="">発注機関: すべて</option>
+        </select>
+        <button class="btn-reset" onclick="resetFilters()">リセット</button>
+      </div>
+    </div>
+
+    <!-- 詳細検索（取得条件のダウンロード） -->
+    <details class="advanced-search" style="margin:8px 12px;padding:8px 10px;background:#f5f7fa;border:1px solid #d0d7de;border-radius:6px;font-size:12px;">
+      <summary style="cursor:pointer;font-weight:600;color:#1a56a0;">⚙ 追加データ取得（詳細検索）</summary>
+      <div style="margin-top:8px;line-height:1.5;color:#555;">
+        ここで条件を設定し「検索条件をダウンロード」ボタンを押すと <code>search_config.json</code> が保存されます。<br>
+        そのファイルを <code>data</code> フォルダに置いて <code>run.bat</code> を実行すると、その条件でデータを取得します。<br>
+        <span style="color:#e65100">※通常は最新100件のみ取得（高速）。全件取得は時間がかかります。</span>
+      </div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+        <label>キーワード（案件名）:
+          <input type="text" id="cfg-keyword" style="width:100%;padding:4px;" placeholder="例：舗装">
+        </label>
+        <label>場所:
+          <input type="text" id="cfg-location" style="width:100%;padding:4px;" placeholder="例：さいたま市">
+        </label>
+        <label>取得ページ数（1ページ=100件、最大100）:
+          <input type="number" id="cfg-max-pages" min="1" max="100" value="1" style="width:80px;padding:4px;">
+        </label>
+        <label><input type="checkbox" id="cfg-type-00" checked> 工事等（建設工事）</label>
+        <label><input type="checkbox" id="cfg-type-11"> 物品等（※建設工事特化のため既定OFF）</label>
+        <label><input type="checkbox" id="cfg-fetch-detail" checked> 公告書PDFリンクも取得（やや時間増）</label>
+        <label>詳細取得する最大件数:
+          <input type="number" id="cfg-detail-limit" min="0" max="10000" value="100" style="width:80px;padding:4px;">
+        </label>
+        <button type="button" onclick="downloadSearchConfig()"
+                style="padding:6px 10px;background:#1a56a0;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">
+          検索条件をダウンロード
+        </button>
+      </div>
+    </details>
+
+    <div class="count-bar" id="count-bar">読み込み中...</div>
+
+    <div id="bid-list"></div>
+
+    <div class="sidebar-footer" id="sidebar-footer">
+      <!-- データ取得日時はJSで挿入 -->
+    </div>
+  </div>
+
+  <!-- 地図エリア -->
+  <div id="map-container">
+    <div id="map"></div>
+    <div id="stats-panel">
+      <div class="stat-row">表示中: <strong id="stat-visible">-</strong> 件</div>
+      <div class="stat-row">地図表示不可: <strong id="stat-unmappable">-</strong> 件</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ローディング画面 -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <p>データを読み込んでいます...</p>
+</div>
+
+<!-- エラーバナー -->
+<div id="error-banner" id="error-banner"></div>
+
+<!-- データファイル読み込み -->
+<script src="data/bids.js" onerror="handleDataLoadError()"></script>
+
+<script>
+// ========== 地図初期化 ==========
+const map = L.map('map', {
+  center: [36.0, 139.5],  // 埼玉県中心
+  zoom: 9,
+  zoomControl: true,
+});
+
+// OpenStreetMapタイル（無料・APIキー不要）
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 18,
+}).addTo(map);
+
+// ========== グローバル変数 ==========
+const DISPLAY_LIMIT = 100;  // リスト・地図に同時表示する最大件数
+let allBids = [];
+let filteredBids = [];
+let markers = {};         // id → Leaflet marker
+let markerCluster = null; // クラスタグループ
+let selectedId = null;
+
+// ========== カスタムマーカー作成 ==========
+function createMarkerIcon(method) {
+  const colorMap = {
+    '条件付一般競争入札': '#2e7d32',
+    '一般競争入札':       '#1565c0',
+    '指名競争入札':       '#e65100',
+    '随意契約':           '#6a1b9a',
+  };
+  let color = '#1a56a0';
+  for (const [key, val] of Object.entries(colorMap)) {
+    if (method && method.includes(key.substring(0, 4))) {
+      color = val;
+      break;
+    }
+  }
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:14px; height:14px;
+      background:${color};
+      border:2px solid white;
+      border-radius:50%;
+      box-shadow:0 1px 4px rgba(0,0,0,0.4);
+    "></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+}
+
+// ========== 公式サイト詳細ページを開く ==========
+// ローカルサーバー（server.py）経由で公式サイトの詳細ページを取得して表示する
+function openOnOfficialSite(caseId, type) {
+  if (!caseId) {
+    alert('案件IDが取得できていません。run.bat を再実行してデータを更新してください。');
+    return;
+  }
+  // ローカルサーバー経由でアクセス
+  const url = `http://localhost:8765/detail?case_id=${encodeURIComponent(caseId)}&type=${encodeURIComponent(type || '00')}`;
+  window.open(url, '_blank', 'noopener');
+}
+
+// ========== ポップアップHTML生成 ==========
+function makePopup(bid) {
+  const rows = [
+    ['発注機関', bid.org || '—'],
+    ['所在地',   bid.location || '—'],
+    ['入札方式', bid.method || '—'],
+    ['公告日',   bid.notice_date || '—'],
+    ['入札日',   bid.bid_date || '—'],
+    ['予定価格', bid.price || '—'],
+  ].filter(([, v]) => v && v !== '—');
+
+  const tableRows = rows.map(([k, v]) =>
+    `<tr><td>${k}</td><td>${escHtml(v)}</td></tr>`
+  ).join('');
+
+  // 詳細ページボタン（ローカルサーバー経由）
+  const bidType   = bid.type    || '00';
+  const bidCaseId = bid.case_id || '';
+  const searchBtnHtml = bidCaseId
+    ? `<div style="margin-top:10px;">
+        <button
+          onclick="openOnOfficialSite('${escHtml(bidCaseId)}','${escHtml(bidType)}')"
+          class="popup-link"
+          style="border:none;cursor:pointer;display:inline-block;">
+          公式サイトで詳細を開く →
+        </button>
+        ${bid.number ? `<div style="font-size:10px;color:#999;margin-top:4px;">案件番号: <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;">${escHtml(bid.number)}</code></div>` : ''}
+      </div>`
+    : '';
+
+  return `<div class="popup-content">
+    <div class="popup-title">${escHtml(bid.name)}</div>
+    <table class="popup-table">${tableRows}</table>
+    ${searchBtnHtml}
+  </div>`;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ========== マーカー管理 ==========
+function buildMarkers(bids) {
+  // 既存マーカーをクリア
+  if (markerCluster) {
+    map.removeLayer(markerCluster);
+  }
+  markers = {};
+  markerCluster = L.markerClusterGroup({
+    maxClusterRadius: 40,
+    showCoverageOnHover: false,
+  });
+
+  bids.forEach((bid, idx) => {
+    if (!bid.lat || !bid.lon) return;
+    const id = `bid-${idx}`;
+    bid._id = id;
+
+    const marker = L.marker([bid.lat, bid.lon], {
+      icon: createMarkerIcon(bid.method),
+      title: bid.name,
+    }).bindPopup(makePopup(bid), { maxWidth: 320 });
+
+    marker.on('click', () => selectBid(id));
+    markers[id] = marker;
+    markerCluster.addLayer(marker);
+  });
+
+  map.addLayer(markerCluster);
+}
+
+// ========== 選択 ==========
+function selectBid(id) {
+  // リスト側ハイライト
+  document.querySelectorAll('.bid-item').forEach(el => el.classList.remove('active'));
+  const listItem = document.querySelector(`[data-id="${id}"]`);
+  if (listItem) {
+    listItem.classList.add('active');
+    listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // マーカーポップアップを開く
+  if (markers[id]) {
+    const m = markers[id];
+    map.setView(m.getLatLng(), Math.max(map.getZoom(), 13));
+    m.openPopup();
+  }
+
+  selectedId = id;
+}
+
+// ========== リスト描画 ==========
+function renderList(bids) {
+  const container = document.getElementById('bid-list');
+  container.innerHTML = '';
+
+  if (bids.length === 0) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:#999;font-size:13px;">該当する案件がありません</div>';
+    return;
+  }
+
+  bids.forEach((bid, idx) => {
+    const id = bid._id || `bid-${idx}`;
+    const hasMap = !!(bid.lat && bid.lon);
+
+    const item = document.createElement('div');
+    item.className = 'bid-item' + (hasMap ? '' : ' no-coords');
+    item.dataset.id = id;
+
+    const tags = [];
+    if (bid.location) tags.push(`<span class="tag tag-location">📍${escHtml(bid.location)}</span>`);
+    if (bid.method)   tags.push(`<span class="tag tag-method">${escHtml(bid.method)}</span>`);
+    if (bid.bid_date) tags.push(`<span class="tag tag-date">入札: ${escHtml(bid.bid_date)}</span>`);
+    if (!hasMap)      tags.push(`<span class="tag tag-no-map">地図なし</span>`);
+
+    item.innerHTML = `
+      <div class="bid-name">${escHtml(bid.name)}</div>
+      <div class="bid-org">${escHtml(bid.org || '')}</div>
+      <div class="bid-tags">${tags.join('')}</div>
+    `;
+
+    item.addEventListener('click', () => {
+      if (hasMap) {
+        selectBid(id);
+      } else {
+        // 座標なし案件：case_id があればローカルサーバー経由で詳細を開く
+        if (bid.case_id) {
+          openOnOfficialSite(bid.case_id, bid.type || '00');
+        } else {
+          const fallbackUrl = (typeof BID_META !== 'undefined') ? BID_META.source_url : '';
+          if (fallbackUrl) window.open(fallbackUrl, '_blank', 'noopener');
+        }
+      }
+    });
+
+    container.appendChild(item);
+  });
+}
+
+// ========== フィルター ==========
+function applyFilters() {
+  const query    = document.getElementById('search-input').value.toLowerCase();
+  const category = document.getElementById('filter-category').value;
+  const method   = document.getElementById('filter-method').value;
+  const org      = document.getElementById('filter-org').value;
+
+  const matched = allBids.filter(bid => {
+    const matchQuery = !query ||
+      (bid.name || '').toLowerCase().includes(query) ||
+      (bid.org  || '').toLowerCase().includes(query) ||
+      (bid.location || '').toLowerCase().includes(query);
+    const matchCategory = !category || (bid.category || '') === category;
+    const matchMethod   = !method   || (bid.method   || '') === method;
+    const matchOrg      = !org      || (bid.org      || '') === org;
+    return matchQuery && matchCategory && matchMethod && matchOrg;
+  });
+
+  // 新しい順に最大100件に絞る
+  filteredBids = matched.slice(0, DISPLAY_LIMIT);
+
+  renderList(filteredBids);
+  buildMarkers(filteredBids);
+  updateCountBar(matched.length);
+
+  // 表示マーカー数を更新
+  const visible = filteredBids.filter(b => b.lat && b.lon).length;
+  document.getElementById('stat-visible').textContent = visible;
+}
+
+function resetFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-category').value = '';
+  document.getElementById('filter-method').value = '';
+  document.getElementById('filter-org').value = '';
+  applyFilters();
+}
+
+function updateCountBar(matchedTotal) {
+  const showing = filteredBids.length;
+  const withMap = filteredBids.filter(b => b.lat && b.lon).length;
+  const total   = (matchedTotal !== undefined) ? matchedTotal : showing;
+  const limitNote = total > DISPLAY_LIMIT
+    ? ` <span style="color:#e65100">（全${total}件中 最新${DISPLAY_LIMIT}件を表示）</span>`
+    : '';
+  document.getElementById('count-bar').innerHTML =
+    `<strong>${showing}</strong> 件 (地図表示: <strong>${withMap}</strong> 件)${limitNote}`;
+}
+
+// ========== セレクトボックスに選択肢を追加 ==========
+function populateFilters(bids) {
+  const categories = [...new Set(bids.map(b => b.category).filter(Boolean))].sort();
+  const methods    = [...new Set(bids.map(b => b.method  ).filter(Boolean))].sort();
+  const orgs       = [...new Set(bids.map(b => b.org     ).filter(Boolean))].sort();
+
+  const categorySel = document.getElementById('filter-category');
+  categories.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = c;
+    categorySel.appendChild(opt);
+  });
+
+  const methodSel = document.getElementById('filter-method');
+  methods.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = m;
+    methodSel.appendChild(opt);
+  });
+
+  const orgSel = document.getElementById('filter-org');
+  orgs.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = o;
+    orgSel.appendChild(opt);
+  });
+}
+
+// ========== 地図を全マーカーにフィット ==========
+function fitMapToBids(bids) {
+  const coords = bids.filter(b => b.lat && b.lon).map(b => [b.lat, b.lon]);
+  if (coords.length > 0) {
+    map.fitBounds(L.latLngBounds(coords), { padding: [30, 30], maxZoom: 13 });
+  }
+}
+
+// ========== エラーハンドラ ==========
+function handleDataLoadError() {
+  document.getElementById('loading-overlay').style.display = 'none';
+  const banner = document.getElementById('error-banner');
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    ⚠ データファイルが見つかりません。<br>
+    まず <strong>run.bat</strong> をダブルクリックしてデータを取得してください。
+  `;
+  setTimeout(() => banner.style.display = 'none', 10000);
+  document.getElementById('bid-list').innerHTML =
+    '<div style="padding:20px;color:#c62828;font-size:13px;">' +
+    '⚠ データがありません。<br><br>' +
+    '<strong>手順:</strong><br>' +
+    '1. run.bat をダブルクリック<br>' +
+    '2. データ取得完了後、このページを再読み込み</div>';
+  document.getElementById('count-bar').textContent = 'データなし';
+  document.getElementById('header-meta').textContent = 'データ未取得';
+}
+
+// ========== 初期化 ==========
+function init() {
+  // データが読み込まれているか確認
+  if (typeof BID_DATA === 'undefined') {
+    handleDataLoadError();
+    return;
+  }
+
+  // 公開日の新しい順に並び替え（日付なしは末尾へ）
+  allBids = [...BID_DATA].sort((a, b) => {
+    const da = a.notice_date || a.bid_date || '';
+    const db = b.notice_date || b.bid_date || '';
+    return db.localeCompare(da);
+  });
+
+  // _idを付与
+  allBids.forEach((bid, idx) => { bid._id = `bid-${idx}`; });
+
+  // フィルター選択肢を構築
+  populateFilters(allBids);
+
+  // 初回表示：新しい順に最大100件
+  filteredBids = allBids.slice(0, DISPLAY_LIMIT);
+  renderList(filteredBids);
+  buildMarkers(filteredBids);
+  updateCountBar(allBids.length);
+  fitMapToBids(filteredBids);
+
+  // 統計パネル更新
+  const withMap = allBids.filter(b => b.lat && b.lon).length;
+  const withoutMap = allBids.length - withMap;
+  document.getElementById('stat-visible').textContent = withMap;
+  document.getElementById('stat-unmappable').textContent = withoutMap;
+
+  // ヘッダーとフッター更新
+  if (typeof BID_META !== 'undefined') {
+    document.getElementById('header-meta').textContent =
+      `取得: ${BID_META.fetched_at} ｜ 計 ${BID_META.total} 件`;
+    document.getElementById('sidebar-footer').innerHTML =
+      `取得日時: ${BID_META.fetched_at}<br>` +
+      `<a class="btn-source" href="${BID_META.source_url}" target="_blank" rel="noopener">入札情報サイトを開く</a>`;
+  }
+
+  // ローディング非表示
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+// DOMロード後に実行
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  setTimeout(init, 100);
+}
+</script>
+</body>
+</html>
