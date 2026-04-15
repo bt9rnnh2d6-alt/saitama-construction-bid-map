@@ -1,0 +1,71 @@
+name: scrape-and-push
+
+# いつ実行するか
+on:
+  # 手動実行（Actionsタブから「Run workflow」ボタンで実行可能）
+  workflow_dispatch:
+
+  # 定期実行（UTC基準）
+  # 日本時間 朝6時 (UTC 21時) と 夕方18時 (UTC 9時) の1日2回
+  schedule:
+    - cron: "0 21 * * *"
+    - cron: "0 9 * * *"
+
+# 同時実行を防ぐ（前のジョブが終わるまで待つ）
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 依存ライブラリをインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: 入札情報を取得（scraper.py）
+        run: |
+          python scraper.py < /dev/null || true
+        env:
+          PYTHONIOENCODING: utf-8
+          # デフォルト設定で建設工事(00)のみ取得
+
+      - name: 取得件数を確認
+        run: |
+          if [ ! -f data/bids.js ]; then
+            echo "::error::data/bids.js が生成されませんでした"
+            exit 1
+          fi
+          wc -c data/bids.js
+
+      - name: Supabase にアップロード（push_to_supabase.py）
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          python push_to_supabase.py < /dev/null
+
+      - name: デバッグ情報をアーティファクトで保存（失敗時調査用）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-${{ github.run_id }}
+          path: |
+            data/debug_*.html
+            data/bids.js
+          retention-days: 7
+          if-no-files-found: ignore
