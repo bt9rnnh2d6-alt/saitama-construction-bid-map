@@ -21,7 +21,10 @@ import os
 import re
 import json
 import requests
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# 日本時間（JST, UTC+9）
+JST = timezone(timedelta(hours=9))
 
 # --- 環境変数の読み込み（.env があれば使用）---
 try:
@@ -100,6 +103,44 @@ def upsert_bids(bids):
     return total, True
 
 
+def delete_past_bids():
+    """開札日（bid_date）が今日より前の案件を Supabase から物理削除する。
+    日本時間基準で「今日」を判定。GitHub Actions は UTC 稼働のため明示的に JST を使う。
+    bid_date が null/空文字の案件は対象外（開札日未定の案件は残す）。
+    """
+    today = datetime.now(JST).strftime("%Y/%m/%d")
+    url = f"{SUPABASE_URL}/rest/v1/bids"
+    headers = {
+        "apikey":        SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Prefer":        "return=representation",
+    }
+    # bid_date が "YYYY/MM/DD" 形式で入っているものだけを対象に、
+    # 「2000/01/01 以上 かつ 今日より前」の範囲を削除する。
+    # ※ この条件で null/空文字は自動的に除外される。
+    params = {
+        "and": f"(bid_date.gte.2000/01/01,bid_date.lt.{today})",
+        "select": "id",  # 削除件数を返すため
+    }
+    try:
+        r = requests.delete(url, headers=headers, params=params, timeout=30)
+    except Exception as e:
+        print(f"  ⚠ 過去案件の削除中にエラー: {e}")
+        return 0, False
+
+    if r.status_code not in (200, 204):
+        print(f"  ⚠ 過去案件の削除に失敗 (HTTP {r.status_code}): {r.text[:200]}")
+        return 0, False
+
+    # return=representation で削除された行が JSON で返る
+    try:
+        deleted = r.json() if r.text else []
+    except Exception:
+        deleted = []
+    count = len(deleted) if isinstance(deleted, list) else 0
+    return count, True
+
+
 def upsert_meta(meta):
     """meta テーブルに最終更新日時などを保存"""
     url = f"{SUPABASE_URL}/rest/v1/meta"
@@ -139,7 +180,7 @@ def main():
         print("   SUPABASE_SERVICE_KEY=sb_secret_xxxxx")
         return 1
 
-    print(f"\n[1/3] {BIDS_JS} を読み込み中...")
+    print(f"\n[1/4] {BIDS_JS} を読み込み中...")
     try:
         bids, meta = load_bids_from_js(BIDS_JS)
     except Exception as e:
@@ -147,18 +188,27 @@ def main():
         return 1
     print(f"  ✓ {len(bids)} 件読み込み完了")
 
-    print(f"\n[2/3] Supabase にアップロード中...")
+    print(f"\n[2/4] Supabase にアップロード中...")
     print(f"   URL: {SUPABASE_URL}")
     sent, ok = upsert_bids(bids)
     if not ok:
         print(f"\n❌ 失敗（{sent} 件まで送信済み）")
         return 1
 
-    print(f"\n[3/3] メタ情報を保存...")
+    print(f"\n[3/4] 開札日を過ぎた案件を削除中...")
+    today_jst = datetime.now(JST).strftime("%Y/%m/%d")
+    print(f"   基準日（JST）: {today_jst}")
+    deleted, ok_del = delete_past_bids()
+    if ok_del:
+        print(f"  ✓ 過去案件 {deleted} 件を削除しました")
+    else:
+        print(f"  ⚠ 削除に失敗しましたが処理は続行します")
+
+    print(f"\n[4/4] メタ情報を保存...")
     if upsert_meta(meta):
         print(f"  ✓ 最終更新日時を保存")
 
-    print(f"\n✅ 完了: {sent} 件を Supabase に送信しました。")
+    print(f"\n✅ 完了: 送信 {sent} 件 / 削除 {deleted} 件")
     return 0
 
 
